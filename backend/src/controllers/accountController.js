@@ -47,22 +47,25 @@ exports.createAccount = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, type, currency, balance, color, icon, issuer, last4Digits, expiryDate, creditLimit, paymentDueDay } = req.body;
+    const { name, type, currency, balance, color, icon, issuer, last4Digits, expiryDate, creditLimit, closingDate } = req.body;
+
+    // For credit cards, balance represents current debt (stored as negative)
+    const initialBalance = type === 'credit_card' ? (balance || 0) : (balance || 0);
 
     const account = new Account({
       userId: req.userId,
       name,
       type,
       currency,
-      balance: type === 'credit_card' ? 0 : (balance || 0), // Credit cards start with 0 balance (debt starts at 0)
-      initialBalance: type === 'credit_card' ? 0 : (balance || 0),
+      balance: initialBalance,
+      initialBalance: initialBalance,
       color,
       icon,
       issuer: type === 'credit_card' ? issuer : undefined,
       last4Digits: type === 'credit_card' ? last4Digits : undefined,
       expiryDate: type === 'credit_card' ? expiryDate : undefined,
       creditLimit: type === 'credit_card' ? creditLimit : undefined,
-      paymentDueDay: type === 'credit_card' ? paymentDueDay : undefined
+      closingDate: type === 'credit_card' ? closingDate : undefined
     });
 
     await account.save();
@@ -76,7 +79,7 @@ exports.createAccount = async (req, res) => {
 // Update account
 exports.updateAccount = async (req, res) => {
   try {
-    const { name, type, color, icon, isActive, issuer, last4Digits, expiryDate, creditLimit, paymentDueDay } = req.body;
+    const { name, type, color, icon, isActive, issuer, last4Digits, expiryDate, creditLimit, closingDate, balance } = req.body;
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
@@ -88,7 +91,8 @@ exports.updateAccount = async (req, res) => {
     if (last4Digits !== undefined) updateData.last4Digits = last4Digits;
     if (expiryDate !== undefined) updateData.expiryDate = expiryDate;
     if (creditLimit !== undefined) updateData.creditLimit = creditLimit;
-    if (paymentDueDay !== undefined) updateData.paymentDueDay = paymentDueDay;
+    if (closingDate !== undefined) updateData.closingDate = closingDate;
+    if (balance !== undefined) updateData.balance = balance;
 
     const account = await Account.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },

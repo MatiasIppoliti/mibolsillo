@@ -30,7 +30,7 @@ export interface Account {
   last4Digits?: string;
   expiryDate?: string;
   creditLimit?: number;
-  paymentDueDay?: number;
+  closingDate?: string;
   createdAt: string;
   updatedAt: string;
 }

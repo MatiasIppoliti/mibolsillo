@@ -61,7 +61,7 @@ const Accounts: React.FC = () => {
     last4Digits: "",
     expiryDate: "",
     creditLimit: "",
-    paymentDueDay: "",
+    closingDate: "",
   });
 
   /* Filters State */
@@ -91,7 +91,7 @@ const Accounts: React.FC = () => {
         last4Digits: account.last4Digits || "",
         expiryDate: account.expiryDate || "",
         creditLimit: account.creditLimit?.toString() || "",
-        paymentDueDay: account.paymentDueDay?.toString() || "",
+        closingDate: account.closingDate || "",
       });
     } else {
       setEditingAccount(null);
@@ -105,7 +105,7 @@ const Accounts: React.FC = () => {
         last4Digits: "",
         expiryDate: "",
         creditLimit: "",
-        paymentDueDay: "",
+        closingDate: "",
       });
     }
     setIsModalOpen(true);
@@ -146,7 +146,7 @@ const Accounts: React.FC = () => {
       accountData.expiryDate = formData.expiryDate;
       accountData.creditLimit =
         parseFloat(formData.creditLimit.replace(/\./g, "")) || 0;
-      accountData.paymentDueDay = parseInt(formData.paymentDueDay, 10);
+      accountData.closingDate = formData.closingDate;
     }
 
     if (editingAccount) {
@@ -168,17 +168,19 @@ const Accounts: React.FC = () => {
     setMenuOpenId(null);
   };
 
-  const getNextPaymentDate = (day: number) => {
+  const getNextClosingDate = (closingDate: string) => {
+    // closingDate format: DD/MM
+    const [day, month] = closingDate.split("/").map(Number);
+
     const today = new Date();
-    const currentDay = today.getDate();
-    const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
 
-    let targetDate = new Date(currentYear, currentMonth, day);
+    // Create the target date for this year
+    let targetDate = new Date(currentYear, month - 1, day);
 
-    if (day < currentDay) {
-      // If the day has passed, it's next month
-      targetDate = new Date(currentYear, currentMonth + 1, day);
+    // If the date has passed this year, show next year's date
+    if (targetDate < today) {
+      targetDate = new Date(currentYear + 1, month - 1, day);
     }
 
     return targetDate.toLocaleDateString("es-AR", {
@@ -437,7 +439,7 @@ const Accounts: React.FC = () => {
                           {/* Secondary Info */}
                           {account.type === "credit_card" &&
                           account.creditLimit &&
-                          account.paymentDueDay ? (
+                          account.closingDate ? (
                             <div className="space-y-3">
                               <div>
                                 <div className="flex justify-between text-xs font-medium mb-1.5">
@@ -477,10 +479,10 @@ const Accounts: React.FC = () => {
                               </div>
                               <div className="flex items-center justify-between pt-2 border-t border-[var(--border-color)]">
                                 <span className="text-xs text-[var(--text-muted)] font-medium">
-                                  Próximo vencimiento
+                                  Próximo cierre
                                 </span>
                                 <span className="text-sm font-semibold text-[var(--text-primary)]">
-                                  {getNextPaymentDate(account.paymentDueDay)}
+                                  {getNextClosingDate(account.closingDate)}
                                 </span>
                               </div>
                             </div>
@@ -663,20 +665,21 @@ const Accounts: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <Input
-                      label="Día de Cierre / Venc"
-                      value={formData.paymentDueDay}
-                      type="number"
-                      min="1"
-                      max="31"
+                      label="Día de Cierre"
+                      value={formData.closingDate}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (val > 31) return;
-                        setFormData({
-                          ...formData,
-                          paymentDueDay: e.target.value,
-                        });
+                        let val = e.target.value;
+                        // Auto-add slash after DD
+                        if (
+                          val.length === 2 &&
+                          formData.closingDate.length === 1
+                        ) {
+                          val += "/";
+                        }
+                        if (val.length > 5) return;
+                        setFormData({ ...formData, closingDate: val });
                       }}
-                      placeholder="Ej: 15"
+                      placeholder="DD/MM"
                       required
                     />
                     <Input
@@ -772,7 +775,7 @@ const Accounts: React.FC = () => {
                       !formData.last4Digits ||
                       !formData.expiryDate ||
                       !formData.creditLimit ||
-                      !formData.paymentDueDay
+                      !formData.closingDate
                     : formData.balance === "")
                 }
               >

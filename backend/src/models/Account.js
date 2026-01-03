@@ -31,10 +31,8 @@ const accountSchema = new mongoose.Schema({
     type: Number,
     required: function() { return this.type === 'credit_card'; }
   },
-  paymentDueDay: {
-    type: Number,
-    min: 1,
-    max: 31,
+  closingDate: {
+    type: String, // DD/MM format for closing date
     required: function() { return this.type === 'credit_card'; }
   },
   expiryDate: {

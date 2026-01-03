@@ -16,7 +16,7 @@ const createAccountValidation = [
   body('last4Digits').if(body('type').equals('credit_card')).isLength({ min: 4, max: 4 }).withMessage('Debe ingresar los últimos 4 dígitos'),
   body('expiryDate').if(body('type').equals('credit_card')).notEmpty().withMessage('El vencimiento es requerido'),
   body('creditLimit').if(body('type').equals('credit_card')).isNumeric().withMessage('El límite de crédito debe ser un número'),
-  body('paymentDueDay').if(body('type').equals('credit_card')).isInt({ min: 1, max: 31 }).withMessage('El día de vencimiento debe ser entre 1 y 31')
+  body('closingDate').if(body('type').equals('credit_card')).notEmpty().withMessage('La fecha de cierre es requerida')
 ];
 
 // Routes
