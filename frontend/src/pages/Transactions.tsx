@@ -29,7 +29,12 @@ import {
   Loading,
   Badge,
 } from "../components/common";
-import { formatCurrency, formatRelativeDate } from "../utils/formatters";
+import {
+  formatCurrency,
+  formatRelativeDate,
+  getLocalDateKey,
+  getTodayLocalDate,
+} from "../utils/formatters";
 import type { Transaction, TransactionType, Currency } from "../types";
 
 const Transactions: React.FC = () => {
@@ -57,7 +62,7 @@ const Transactions: React.FC = () => {
     type: "expense" as TransactionType,
     amount: "",
     description: "",
-    date: new Date().toISOString().split("T")[0],
+    date: getTodayLocalDate(),
     toAccountId: "",
   });
 
@@ -74,7 +79,7 @@ const Transactions: React.FC = () => {
       type: "expense",
       amount: "",
       description: "",
-      date: new Date().toISOString().split("T")[0],
+      date: getTodayLocalDate(),
       toAccountId: "",
     });
     setIsModalOpen(true);
@@ -99,7 +104,9 @@ const Transactions: React.FC = () => {
         amount:
           parseFloat(formData.amount.replace(/\./g, "").replace(",", ".")) || 0,
         description: formData.description,
-        date: formData.date,
+        // Create a date object at 12:00 PM local time to prevent timezone shifts
+        // This ensures that when converted to UTC (which can be +/- hours), it stays on the same day for most American/European timezones
+        date: new Date(formData.date + "T12:00:00").toISOString(),
         toAccountId:
           formData.type === "transfer" ? formData.toAccountId : undefined,
       })
@@ -141,11 +148,11 @@ const Transactions: React.FC = () => {
     return matchesType && matchesAccount && matchesCategory && matchesSearch;
   });
 
-  // Grouping Logic
+  // Grouping Logic - use local timezone to avoid date shifting
   const groupedTransactions = filteredTransactions.reduce(
     (groups, transaction) => {
-      // Assuming date is in ISO format YYYY-MM-DD or similar standard
-      const dateKey = transaction.date.split("T")[0];
+      // Use getLocalDateKey to convert UTC date to local timezone date key
+      const dateKey = getLocalDateKey(transaction.date);
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }

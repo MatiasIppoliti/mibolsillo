@@ -9,6 +9,10 @@ import {
   Trash2,
   Coins,
   CreditCard,
+  DollarSign,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../hooks/useRedux";
 import {
@@ -16,6 +20,7 @@ import {
   createAccount,
   updateAccount,
   deleteAccount,
+  payCreditCard,
 } from "../features/accounts/accountsSlice";
 import {
   Card,
@@ -66,6 +71,18 @@ const Accounts: React.FC = () => {
 
   /* Filters State */
   const [activeFilter, setActiveFilter] = useState<AccountType | "all">("all");
+
+  /* Pay Credit Card Modal State */
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payingCard, setPayingCard] = useState<Account | null>(null);
+  const [payFormData, setPayFormData] = useState({
+    sourceAccountId: "",
+    totalAmount: "",
+    includesFees: false,
+    feesAmount: "",
+    feesDescription: "Intereses y comisiones",
+  });
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const handleFilterChange = (type: AccountType | "all") => {
     setActiveFilter(type);
@@ -188,6 +205,90 @@ const Accounts: React.FC = () => {
       month: "short",
     });
   };
+
+  // Get non-credit-card accounts with same currency as the paying card
+  const getSourceAccountOptions = () => {
+    if (!payingCard) return [];
+    return accounts
+      .filter(
+        (a) =>
+          a.type !== "credit_card" &&
+          a.currency === payingCard.currency &&
+          a._id !== payingCard._id
+      )
+      .map((a) => ({
+        value: a._id,
+        label: `${a.name} (${formatCurrency(a.balance, a.currency)})`,
+      }));
+  };
+
+  const handleOpenPayModal = (creditCard: Account) => {
+    setPayingCard(creditCard);
+    setPayFormData({
+      sourceAccountId: "",
+      totalAmount: Math.abs(creditCard.balance).toString(),
+      includesFees: false,
+      feesAmount: "",
+      feesDescription: "Intereses y comisiones",
+    });
+    setPaymentSuccess(false);
+    setIsPayModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleClosePayModal = () => {
+    setIsPayModalOpen(false);
+    setPayingCard(null);
+    setPaymentSuccess(false);
+  };
+
+  const handlePaySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payingCard) return;
+
+    const totalAmount =
+      parseFloat(payFormData.totalAmount.replace(/\./g, "")) || 0;
+    const feesAmount = payFormData.includesFees
+      ? parseFloat(payFormData.feesAmount.replace(/\./g, "")) || 0
+      : 0;
+
+    try {
+      await dispatch(
+        payCreditCard({
+          creditCardId: payingCard._id,
+          data: {
+            sourceAccountId: payFormData.sourceAccountId,
+            totalAmount,
+            feesAmount: feesAmount > 0 ? feesAmount : undefined,
+            feesDescription:
+              feesAmount > 0 ? payFormData.feesDescription : undefined,
+          },
+        })
+      ).unwrap();
+
+      setPaymentSuccess(true);
+      // Close after showing success message
+      setTimeout(() => {
+        handleClosePayModal();
+        dispatch(fetchAccounts());
+      }, 2000);
+    } catch {
+      // Error handled by Redux
+    }
+  };
+
+  // Calculate derived values for the payment modal
+  const currentDebt = payingCard ? Math.abs(payingCard.balance) : 0;
+  const enteredAmount =
+    parseFloat(payFormData.totalAmount.replace(/\./g, "")) || 0;
+  const feesFromTotal = payFormData.includesFees
+    ? parseFloat(payFormData.feesAmount.replace(/\./g, "")) || 0
+    : 0;
+  const selectedSourceAccount = accounts.find(
+    (a) => a._id === payFormData.sourceAccountId
+  );
+  const hasInsufficientFunds =
+    selectedSourceAccount && selectedSourceAccount.balance < enteredAmount;
 
   const currencyOptions = [
     { value: "ARS", label: "ARS - Peso Argentino" },
@@ -380,6 +481,17 @@ const Accounts: React.FC = () => {
 
                               {menuOpenId === account._id && (
                                 <div className="absolute right-0 top-full mt-2 w-44 bg-white border border-[var(--border-color)] rounded-xl shadow-xl z-20 overflow-hidden animate-slide-down">
+                                  {account.type === "credit_card" && (
+                                    <button
+                                      onClick={() =>
+                                        handleOpenPayModal(account)
+                                      }
+                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--accent-success)] hover:bg-[var(--accent-success-bg)] transition-colors border-b border-[var(--border-color)]"
+                                    >
+                                      <DollarSign size={16} />
+                                      Pagar Tarjeta
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => handleOpenModal(account)}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
@@ -784,6 +896,263 @@ const Accounts: React.FC = () => {
             </div>
           </div>
         </form>
+      </Modal>
+
+      {/* Pay Credit Card Modal */}
+      <Modal
+        isOpen={isPayModalOpen}
+        onClose={handleClosePayModal}
+        title="Pagar Tarjeta de Crédito"
+        size="lg"
+      >
+        {paymentSuccess ? (
+          <div className="py-12 text-center animate-fade-in">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[var(--accent-success-bg)] flex items-center justify-center">
+              <CheckCircle2
+                size={40}
+                className="text-[var(--accent-success)]"
+              />
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+              ¡Pago registrado!
+            </h3>
+            <p className="text-[var(--text-secondary)]">
+              El pago de tu tarjeta se ha registrado correctamente.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handlePaySubmit} className="space-y-6">
+            {/* Card Info Summary */}
+            {payingCard && (
+              <div className="bg-gradient-to-r from-[var(--bg-elevated)] to-[var(--bg-hover)] p-5 rounded-2xl border border-[var(--border-color)]">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                    style={{
+                      backgroundColor: `${payingCard.color}20`,
+                      color: payingCard.color,
+                    }}
+                  >
+                    <CreditCard size={28} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-[var(--text-primary)] text-lg">
+                      {payingCard.name}
+                    </h4>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      {payingCard.issuer} •••• {payingCard.last4Digits}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Deuda registrada
+                    </p>
+                    <p className="text-xl font-bold text-[var(--text-primary)]">
+                      {formatCurrency(currentDebt, payingCard.currency)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Source Account */}
+            <Select
+              label="Pagar desde"
+              value={payFormData.sourceAccountId}
+              onChange={(e) =>
+                setPayFormData({
+                  ...payFormData,
+                  sourceAccountId: e.target.value,
+                })
+              }
+              options={getSourceAccountOptions()}
+              placeholder="Seleccionar cuenta..."
+              required
+            />
+
+            {hasInsufficientFunds && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--accent-danger-bg)] text-[var(--accent-danger)]">
+                <AlertCircle size={18} />
+                <span className="text-sm font-medium">
+                  Saldo insuficiente en la cuenta seleccionada
+                </span>
+              </div>
+            )}
+
+            {/* Total Payment Amount */}
+            <div>
+              <Input
+                label="Monto total a pagar (según resumen)"
+                value={payFormData.totalAmount}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/\./g, "");
+                  if (!/^\d*$/.test(rawValue)) return;
+                  const numberValue = parseInt(rawValue, 10);
+                  if (isNaN(numberValue)) {
+                    setPayFormData({ ...payFormData, totalAmount: "" });
+                    return;
+                  }
+                  const formatted = new Intl.NumberFormat("es-AR").format(
+                    numberValue
+                  );
+                  setPayFormData({ ...payFormData, totalAmount: formatted });
+                }}
+                placeholder="0"
+                required
+              />
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Ingresa el monto total que figura en tu resumen de tarjeta
+              </p>
+            </div>
+
+            {/* Fees Section */}
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={payFormData.includesFees}
+                  onChange={(e) =>
+                    setPayFormData({
+                      ...payFormData,
+                      includesFees: e.target.checked,
+                      feesAmount: e.target.checked
+                        ? payFormData.feesAmount
+                        : "",
+                    })
+                  }
+                  className="w-5 h-5 rounded-md border-2 border-[var(--border-color)] focus:ring-2 focus:ring-[var(--accent-primary)] cursor-pointer"
+                />
+                <span className="text-sm font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
+                  El monto incluye intereses o comisiones adicionales
+                </span>
+              </label>
+
+              {payFormData.includesFees && (
+                <div className="ml-8 space-y-4 animate-fade-in">
+                  <Input
+                    label="Monto de intereses/comisiones"
+                    value={payFormData.feesAmount}
+                    onChange={(e) => {
+                      const rawValue = e.target.value.replace(/\./g, "");
+                      if (!/^\d*$/.test(rawValue)) return;
+                      const numberValue = parseInt(rawValue, 10);
+                      if (isNaN(numberValue)) {
+                        setPayFormData({ ...payFormData, feesAmount: "" });
+                        return;
+                      }
+                      const formatted = new Intl.NumberFormat("es-AR").format(
+                        numberValue
+                      );
+                      setPayFormData({ ...payFormData, feesAmount: formatted });
+                    }}
+                    placeholder="0"
+                  />
+                  <Input
+                    label="Descripción (opcional)"
+                    value={payFormData.feesDescription}
+                    onChange={(e) =>
+                      setPayFormData({
+                        ...payFormData,
+                        feesDescription: e.target.value,
+                      })
+                    }
+                    placeholder="Ej: Intereses por pago mínimo"
+                  />
+                  {feesFromTotal > 0 && (
+                    <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-color)]">
+                      <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                        <ArrowRight size={16} />
+                        <span className="text-sm">
+                          <strong className="text-[var(--text-primary)]">
+                            {formatCurrency(
+                              feesFromTotal,
+                              payingCard?.currency || "ARS"
+                            )}
+                          </strong>{" "}
+                          se registrará como gasto en{" "}
+                          <span className="font-medium text-[var(--accent-danger)]">
+                            "Intereses / Comisiones"
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            {payFormData.sourceAccountId && enteredAmount > 0 && (
+              <div className="p-5 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-color)] space-y-3">
+                <h4 className="font-semibold text-[var(--text-primary)]">
+                  Resumen del pago
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-secondary)]">
+                      Transferencia a tarjeta
+                    </span>
+                    <span className="font-medium text-[var(--text-primary)]">
+                      {formatCurrency(
+                        enteredAmount,
+                        payingCard?.currency || "ARS"
+                      )}
+                    </span>
+                  </div>
+                  {feesFromTotal > 0 && (
+                    <div className="flex justify-between text-[var(--accent-danger)]">
+                      <span>Gastos (intereses/comisiones)</span>
+                      <span className="font-medium">
+                        {formatCurrency(
+                          feesFromTotal,
+                          payingCard?.currency || "ARS"
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-[var(--border-color)] flex justify-between">
+                    <span className="text-[var(--text-secondary)]">
+                      Nueva deuda de tarjeta
+                    </span>
+                    <span className="font-bold text-[var(--accent-success)]">
+                      {formatCurrency(
+                        Math.max(
+                          0,
+                          currentDebt - enteredAmount + feesFromTotal
+                        ),
+                        payingCard?.currency || "ARS"
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-4 border-t border-[var(--border-color)]">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleClosePayModal}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  !payFormData.sourceAccountId ||
+                  !payFormData.totalAmount ||
+                  enteredAmount <= 0 ||
+                  hasInsufficientFunds ||
+                  isLoading
+                }
+                leftIcon={<DollarSign size={18} />}
+              >
+                {isLoading ? "Procesando..." : "Registrar Pago"}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );

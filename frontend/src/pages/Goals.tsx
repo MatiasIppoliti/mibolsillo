@@ -57,7 +57,10 @@ const Goals: React.FC = () => {
         name: formData.name,
         targetAmount: parseFloat(formData.targetAmount),
         currency: formData.currency,
-        deadline: formData.deadline || undefined,
+        // Fix timezone issue: append noon time to prevent date shifting when converted to UTC
+        deadline: formData.deadline
+          ? formData.deadline + "T12:00:00"
+          : undefined,
         color: formData.color,
       })
     );

@@ -29,6 +29,7 @@ import {
   formatCurrency,
   formatRelativeDate,
   formatFrequency,
+  getTodayLocalDate,
 } from "../utils/formatters";
 import type { RecurringExpense, Frequency, Category } from "../types";
 
@@ -45,7 +46,7 @@ const Recurring: React.FC = () => {
     categoryId: "",
     amount: "",
     frequency: "monthly" as Frequency,
-    startDate: new Date().toISOString().split("T")[0],
+    startDate: getTodayLocalDate(),
   });
 
   useEffect(() => {
@@ -61,7 +62,7 @@ const Recurring: React.FC = () => {
       categoryId: expenseCategories[0]?._id || "",
       amount: "",
       frequency: "monthly",
-      startDate: new Date().toISOString().split("T")[0],
+      startDate: getTodayLocalDate(),
     });
     setIsModalOpen(true);
   };
@@ -75,7 +76,8 @@ const Recurring: React.FC = () => {
         categoryId: formData.categoryId,
         amount: parseFloat(formData.amount),
         frequency: formData.frequency,
-        startDate: formData.startDate,
+        // Fix timezone issue by creating a Date at noon local time and converting to ISO
+        startDate: new Date(formData.startDate + "T12:00:00").toISOString(),
       })
     );
     setIsModalOpen(false);

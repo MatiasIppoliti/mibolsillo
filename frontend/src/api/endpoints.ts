@@ -42,6 +42,17 @@ export const accountsApi = {
     api.put<Account>(`/accounts/${id}`, data),
   
   delete: (id: string) => api.delete<{ message: string }>(`/accounts/${id}`),
+  
+  payCreditCard: (id: string, data: {
+    sourceAccountId: string;
+    totalAmount: number;
+    feesAmount?: number;
+    feesDescription?: string;
+  }) => api.post<{
+    message: string;
+    transactions: Transaction[];
+    updatedAccounts: { creditCard: Account; sourceAccount: Account };
+  }>(`/accounts/${id}/pay-credit-card`, data),
 };
 
 // Category endpoints

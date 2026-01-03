@@ -24,6 +24,7 @@ router.get('/', accountController.getAccounts);
 router.get('/summary', accountController.getSummary);
 router.get('/:id', accountController.getAccount);
 router.post('/', createAccountValidation, accountController.createAccount);
+router.post('/:id/pay-credit-card', accountController.payCreditCard);
 router.put('/:id', accountController.updateAccount);
 router.delete('/:id', accountController.deleteAccount);
 

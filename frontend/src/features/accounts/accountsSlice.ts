@@ -83,6 +83,30 @@ export const deleteAccount = createAsyncThunk(
   }
 );
 
+export const payCreditCard = createAsyncThunk(
+  'accounts/payCreditCard',
+  async (
+    { creditCardId, data }: {
+      creditCardId: string;
+      data: {
+        sourceAccountId: string;
+        totalAmount: number;
+        feesAmount?: number;
+        feesDescription?: string;
+      };
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await accountsApi.payCreditCard(creditCardId, data);
+      return response.data;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return rejectWithValue(err.response?.data?.message || 'Error al pagar la tarjeta');
+    }
+  }
+);
+
 const accountsSlice = createSlice({
   name: 'accounts',
   initialState,
@@ -122,6 +146,27 @@ const accountsSlice = createSlice({
       })
       .addCase(deleteAccount.fulfilled, (state, action) => {
         state.accounts = state.accounts.filter(a => a._id !== action.payload);
+      })
+      .addCase(payCreditCard.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(payCreditCard.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // Update the affected accounts in the state
+        const { creditCard, sourceAccount } = action.payload.updatedAccounts;
+        const creditCardIndex = state.accounts.findIndex(a => a._id === creditCard._id);
+        const sourceIndex = state.accounts.findIndex(a => a._id === sourceAccount._id);
+        if (creditCardIndex !== -1) {
+          state.accounts[creditCardIndex] = creditCard;
+        }
+        if (sourceIndex !== -1) {
+          state.accounts[sourceIndex] = sourceAccount;
+        }
+      })
+      .addCase(payCreditCard.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

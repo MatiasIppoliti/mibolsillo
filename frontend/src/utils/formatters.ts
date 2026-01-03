@@ -23,6 +23,10 @@ export const formatCurrency = (amount: number, currency: Currency = 'ARS'): stri
 
 // Format date in Spanish
 export const formatDate = (dateString: string, options?: Intl.DateTimeFormatOptions): string => {
+  // Fix: Treat plain YYYY-MM-DD strings as Local Date
+  if (!dateString.includes('T') && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    dateString += 'T12:00:00';
+  }
   const date = new Date(dateString);
   const defaultOptions: Intl.DateTimeFormatOptions = {
     day: 'numeric',
@@ -34,19 +38,48 @@ export const formatDate = (dateString: string, options?: Intl.DateTimeFormatOpti
 
 // Format date relative (today, yesterday, etc.)
 export const formatRelativeDate = (dateString: string): string => {
+  // Fix: Treat plain YYYY-MM-DD strings as Local Date (append T12:00:00) to prevent timezone conversion shifts
+  // e.g., "2026-01-07" -> "2026-01-07T12:00:00" (Local) instead of "2026-01-07T00:00:00.000Z" (UTC)
+  if (!dateString.includes('T') && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    dateString += 'T12:00:00';
+  }
+
   const date = new Date(dateString);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (date.toDateString() === today.toDateString()) {
+  // Compare using local date strings to avoid timezone issues
+  const dateLocal = date.toLocaleDateString('es-AR');
+  const todayLocal = today.toLocaleDateString('es-AR');
+  const yesterdayLocal = yesterday.toLocaleDateString('es-AR');
+
+  if (dateLocal === todayLocal) {
     return 'Hoy';
   }
-  if (date.toDateString() === yesterday.toDateString()) {
+  if (dateLocal === yesterdayLocal) {
     return 'Ayer';
   }
   
   return formatDate(dateString);
+};
+
+// Helper function to get local date key for grouping (YYYY-MM-DD in local timezone)
+export const getLocalDateKey = (dateString: string): string => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Get today's date in YYYY-MM-DD format using local timezone (for date input default values)
+export const getTodayLocalDate = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 // Format frequency to Spanish
