@@ -588,8 +588,11 @@ const Transactions: React.FC = () => {
                   </span>
                 </div>
 
-                <Card padding="none" className="overflow-hidden">
-                  <div className="divide-y divide-[var(--border-color)]">
+                <Card
+                  padding="none"
+                  className="overflow-hidden bg-transparent shadow-none border-0"
+                >
+                  <div className="flex flex-col gap-2.5">
                     {dayTransactions.map((t: Transaction) => {
                       const category =
                         typeof t.categoryId === "object" ? t.categoryId : null;
@@ -601,9 +604,12 @@ const Transactions: React.FC = () => {
                           : null;
 
                       return (
-                        <div key={t._id}>
+                        <div
+                          key={t._id}
+                          className="bg-[var(--bg-card)] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200"
+                        >
                           {/* Mobile View */}
-                          <div className="flex items-center justify-between p-3 gap-3 md:hidden hover:bg-[var(--bg-card-hover)] transition-colors border-b border-[var(--border-color)] last:border-0">
+                          <div className="flex items-center justify-between p-3 gap-3 md:hidden hover:bg-[var(--bg-card-hover)] transition-colors">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                               {/* Icon */}
                               <div
