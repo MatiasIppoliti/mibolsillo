@@ -475,169 +475,179 @@ const Accounts: React.FC = () => {
         {accounts.length > 0 ? (
           <>
             {/* Mobile List View */}
-            <div className="md:hidden space-y-6">
-              {accountGroups.map((group) => {
-                if (activeFilter !== "all" && activeFilter !== group.type)
-                  return null;
-                const groupAccounts = accounts.filter(
-                  (a) => a.type === group.type
+            {(() => {
+              // Calculate the last visible account ID across all groups
+              const visibleAccounts = accountGroups
+                .filter(
+                  (group) =>
+                    activeFilter === "all" || activeFilter === group.type
+                )
+                .flatMap((group) =>
+                  accounts.filter((a) => a.type === group.type)
                 );
-                if (groupAccounts.length === 0) return null;
+              const lastVisibleAccountId =
+                visibleAccounts.length > 0
+                  ? visibleAccounts[visibleAccounts.length - 1]._id
+                  : null;
 
-                return (
-                  <section key={group.type} className="animate-fade-in">
-                    {/* Group Header - Centered */}
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                      <span
-                        className="text-[var(--text-muted)]"
-                        style={{ opacity: 0.7 }}
-                      >
-                        {accountIcons[group.type]}
-                      </span>
-                      <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
-                        {group.label}
-                      </h3>
-                    </div>
+              return (
+                <div className="md:hidden space-y-6">
+                  {accountGroups.map((group) => {
+                    if (activeFilter !== "all" && activeFilter !== group.type)
+                      return null;
+                    const groupAccounts = accounts.filter(
+                      (a) => a.type === group.type
+                    );
+                    if (groupAccounts.length === 0) return null;
 
-                    {/* Account Cards - Compact List */}
-                    <Card
-                      padding="none"
-                      className="overflow-visible rounded-xl"
-                    >
-                      <div className="divide-y divide-[var(--border-color)]">
-                        {groupAccounts.map((account, accountIndex) => (
-                          <div
-                            key={account._id}
-                            className={`flex items-center justify-between p-3.5 hover:bg-[var(--bg-card-hover)] active:bg-[var(--bg-elevated)] transition-colors ${
-                              accountIndex === 0 ? "rounded-t-xl" : ""
-                            } ${
-                              accountIndex === groupAccounts.length - 1
-                                ? "rounded-b-xl"
-                                : ""
-                            }`}
+                    return (
+                      <section key={group.type} className="animate-fade-in">
+                        {/* Group Header - Centered */}
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                          <span
+                            className="text-[var(--text-muted)]"
+                            style={{ opacity: 0.7 }}
                           >
-                            {/* Left: Icon + Info */}
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div
-                                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                style={{
-                                  backgroundColor: `${account.color}15`,
-                                  color: account.color,
-                                }}
-                              >
-                                {accountIcons[account.type]}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="font-semibold text-sm text-[var(--text-primary)] truncate">
-                                  {account.name}
-                                </p>
-                                <p className="text-xs text-[var(--text-secondary)] truncate">
-                                  {account.type === "credit_card"
-                                    ? `${account.issuer} •••• ${account.last4Digits}`
-                                    : account.currency}
-                                </p>
-                              </div>
-                            </div>
+                            {accountIcons[group.type]}
+                          </span>
+                          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+                            {group.label}
+                          </h3>
+                        </div>
 
-                            {/* Right: Balance + Menu */}
-                            <div className="flex items-center gap-2 shrink-0 pl-2">
-                              <div className="text-right">
-                                {account.type === "credit_card" ? (
-                                  <>
-                                    <p className="text-sm font-bold text-[var(--text-primary)]">
-                                      {formatCurrency(
-                                        Math.abs(account.balance),
-                                        account.currency
-                                      )}
-                                    </p>
-                                    {account.creditLimit && (
-                                      <p className="text-[10px] text-[var(--text-muted)]">
-                                        Disp:{" "}
+                        {/* Account Cards - Compact List */}
+                        <div className="flex flex-col gap-2.5">
+                          {groupAccounts.map((account) => (
+                            <div
+                              key={account._id}
+                              className="bg-[var(--bg-card)] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-shadow duration-200 flex items-center justify-between p-3.5 hover:bg-[var(--bg-card-hover)] active:bg-[var(--bg-elevated)]"
+                            >
+                              {/* Left: Icon + Info */}
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div
+                                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                  style={{
+                                    backgroundColor: `${account.color}15`,
+                                    color: account.color,
+                                  }}
+                                >
+                                  {accountIcons[account.type]}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-sm text-[var(--text-primary)] truncate">
+                                    {account.name}
+                                  </p>
+                                  <p className="text-xs text-[var(--text-secondary)] truncate">
+                                    {account.type === "credit_card"
+                                      ? `${account.issuer} •••• ${account.last4Digits}`
+                                      : account.currency}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Right: Balance + Menu */}
+                              <div className="flex items-center gap-2 shrink-0 pl-2">
+                                <div className="text-right">
+                                  {account.type === "credit_card" ? (
+                                    <>
+                                      <p className="text-sm font-bold text-[var(--text-primary)]">
                                         {formatCurrency(
-                                          account.creditLimit + account.balance,
+                                          Math.abs(account.balance),
                                           account.currency
                                         )}
                                       </p>
-                                    )}
-                                  </>
-                                ) : (
-                                  <p
-                                    className="text-sm font-bold"
-                                    style={{
-                                      color:
-                                        account.balance >= 0
-                                          ? "var(--accent-success)"
-                                          : "var(--accent-danger)",
-                                    }}
-                                  >
-                                    {formatCurrency(
-                                      account.balance,
-                                      account.currency
-                                    )}
-                                  </p>
-                                )}
-                              </div>
+                                      {account.creditLimit && (
+                                        <p className="text-[10px] text-[var(--text-muted)]">
+                                          Disp:{" "}
+                                          {formatCurrency(
+                                            account.creditLimit +
+                                              account.balance,
+                                            account.currency
+                                          )}
+                                        </p>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <p
+                                      className="text-sm font-bold"
+                                      style={{
+                                        color:
+                                          account.balance >= 0
+                                            ? "var(--accent-success)"
+                                            : "var(--accent-danger)",
+                                      }}
+                                    >
+                                      {formatCurrency(
+                                        account.balance,
+                                        account.currency
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
 
-                              {/* Menu Button */}
-                              <div className="relative">
-                                <button
-                                  onClick={() =>
-                                    setMenuOpenId(
-                                      menuOpenId === account._id
-                                        ? null
-                                        : account._id
-                                    )
-                                  }
-                                  className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] active:scale-95 transition-all"
-                                >
-                                  <MoreVertical size={16} />
-                                </button>
-
-                                {menuOpenId === account._id && (
-                                  <div
-                                    className={`absolute right-0 w-40 bg-white border border-[var(--border-color)] rounded-xl shadow-xl z-50 overflow-hidden ${
-                                      accountIndex >= groupAccounts.length - 1
-                                        ? "bottom-full mb-1 animate-slide-up"
-                                        : "top-full mt-1 animate-slide-down"
-                                    }`}
+                                {/* Menu Button */}
+                                <div className="relative">
+                                  <button
+                                    onClick={() =>
+                                      setMenuOpenId(
+                                        menuOpenId === account._id
+                                          ? null
+                                          : account._id
+                                      )
+                                    }
+                                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] active:scale-95 transition-all"
                                   >
-                                    {account.type === "credit_card" && (
+                                    <MoreVertical size={16} />
+                                  </button>
+
+                                  {menuOpenId === account._id && (
+                                    <div
+                                      className={`absolute right-0 w-40 bg-white border border-[var(--border-color)] rounded-xl shadow-xl z-50 overflow-hidden ${
+                                        account._id === lastVisibleAccountId
+                                          ? "bottom-full mb-1 animate-slide-up"
+                                          : "top-full mt-1 animate-slide-down"
+                                      }`}
+                                    >
+                                      {account.type === "credit_card" && (
+                                        <button
+                                          onClick={() =>
+                                            handleOpenPayModal(account)
+                                          }
+                                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-[var(--accent-success)] hover:bg-[var(--accent-success-bg)] transition-colors border-b border-[var(--border-color)]"
+                                        >
+                                          <DollarSign size={14} />
+                                          Pagar
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleOpenModal(account)}
+                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+                                      >
+                                        <Edit2 size={14} />
+                                        Editar
+                                      </button>
                                       <button
                                         onClick={() =>
-                                          handleOpenPayModal(account)
+                                          handleDelete(account._id)
                                         }
-                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-[var(--accent-success)] hover:bg-[var(--accent-success-bg)] transition-colors border-b border-[var(--border-color)]"
+                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-[var(--accent-danger)] hover:bg-[var(--accent-danger-bg)] transition-colors"
                                       >
-                                        <DollarSign size={14} />
-                                        Pagar
+                                        <Trash2 size={14} />
+                                        Eliminar
                                       </button>
-                                    )}
-                                    <button
-                                      onClick={() => handleOpenModal(account)}
-                                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
-                                    >
-                                      <Edit2 size={14} />
-                                      Editar
-                                    </button>
-                                    <button
-                                      onClick={() => handleDelete(account._id)}
-                                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-[var(--accent-danger)] hover:bg-[var(--accent-danger-bg)] transition-colors"
-                                    >
-                                      <Trash2 size={14} />
-                                      Eliminar
-                                    </button>
-                                  </div>
-                                )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                  </section>
-                );
-              })}
-            </div>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* Desktop Grid View */}
             <div className="hidden md:block space-y-10">
