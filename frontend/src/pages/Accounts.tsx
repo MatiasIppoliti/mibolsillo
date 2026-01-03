@@ -1399,7 +1399,7 @@ const Accounts: React.FC = () => {
       {/* FAB for Mobile */}
       <button
         onClick={() => handleOpenModal()}
-        className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center z-50 hover:from-emerald-600 hover:to-teal-700 active:scale-95 transition-all"
+        className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center z-30 hover:from-emerald-600 hover:to-teal-700 active:scale-95 transition-all"
         aria-label="Nueva cuenta"
       >
         <Plus size={24} />

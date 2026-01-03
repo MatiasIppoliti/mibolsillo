@@ -25,6 +25,12 @@ const Sidebar: React.FC = () => {
     navigate("/login");
   };
 
+  const handleNavClick = () => {
+    setIsOpen(false);
+    // Scroll to top when navigating to a new section
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const navItems = [
     { path: "/", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     {
@@ -97,7 +103,7 @@ const Sidebar: React.FC = () => {
             <NavLink
               key={item.path}
               to={item.path}
-              onClick={() => setIsOpen(false)}
+              onClick={handleNavClick}
               className={({ isActive }) => `
                 flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group
                 ${
