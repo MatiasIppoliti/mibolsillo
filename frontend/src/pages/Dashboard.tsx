@@ -613,9 +613,42 @@ const Dashboard: React.FC = () => {
   const currentBalance = balanceBreakdown[selectedCurrency];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-10">
-      {/* HEADER SECTION */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="max-w-7xl mx-auto space-y-5 md:space-y-8 animate-fade-in pb-10">
+      {/* MOBILE HEADER */}
+      <header className="md:hidden space-y-3">
+        {/* Centered Title */}
+        <div className="flex items-center justify-center">
+          <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+        </div>
+
+        {/* Month Label + Currency Selector - Centered */}
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-sm text-gray-500 capitalize">
+            {activeMonth.label}
+          </p>
+          {/* Currency Selector - Compact */}
+          {availableCurrencies.length > 1 && (
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+              {availableCurrencies.map((curr) => (
+                <button
+                  key={curr}
+                  onClick={() => setSelectedCurrency(curr)}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                    selectedCurrency === curr
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {curr}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* DESKTOP HEADER */}
+      <header className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             Dashboard
@@ -647,8 +680,89 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* KPI CARDS ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* MOBILE KPI CARDS - 2 columns compact */}
+      <div className="md:hidden grid grid-cols-2 gap-3">
+        {/* Net Worth Card - Mobile */}
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+              <Scale size={16} />
+            </div>
+            <span
+              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                currentBalance.netWorth >= 0
+                  ? "text-emerald-600 bg-emerald-50"
+                  : "text-red-600 bg-red-50"
+              }`}
+            >
+              {currentBalance.netWorth >= 0 ? "+" : "-"}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500">Patrimonio</p>
+          <h2
+            className={`text-lg font-bold ${
+              currentBalance.netWorth >= 0 ? "text-gray-900" : "text-red-600"
+            }`}
+          >
+            {formatCompactCurrency(currentBalance.netWorth, selectedCurrency)}
+          </h2>
+        </div>
+
+        {/* Net of Month Card - Mobile */}
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-xl shadow-sm text-white">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <Scale size={16} />
+            </div>
+            <span
+              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                currentMonthTotals.net >= 0
+                  ? "bg-emerald-400/30 text-emerald-100"
+                  : "bg-red-400/30 text-red-100"
+              }`}
+            >
+              {currentMonthTotals.net >= 0 ? "Superávit" : "Déficit"}
+            </span>
+          </div>
+          <p className="text-xs text-white/70">Neto del Mes</p>
+          <h2 className="text-lg font-bold">
+            {currentMonthTotals.net >= 0 ? "+" : ""}
+            {formatCompactCurrency(currentMonthTotals.net, selectedCurrency)}
+          </h2>
+        </div>
+
+        {/* Income Card - Mobile */}
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+              <TrendingUp size={16} />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">Ingresos</p>
+          <h2 className="text-lg font-bold text-emerald-600">
+            {formatCompactCurrency(currentMonthTotals.income, selectedCurrency)}
+          </h2>
+        </div>
+
+        {/* Expenses Card - Mobile */}
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 bg-red-50 text-red-600 rounded-lg">
+              <TrendingDown size={16} />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">Gastos</p>
+          <h2 className="text-lg font-bold text-red-600">
+            {formatCompactCurrency(
+              currentMonthTotals.expense,
+              selectedCurrency
+            )}
+          </h2>
+        </div>
+      </div>
+
+      {/* DESKTOP KPI CARDS ROW */}
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Net Worth Card */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between mb-4">
@@ -768,10 +882,56 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* MAIN CONTENT GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* LEFT COLUMN: CHART */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm">
+          {/* Mobile Chart Header */}
+          <div className="md:hidden space-y-3 mb-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-gray-900 text-base">
+                Flujo Mensual
+              </h3>
+              {/* Compact Chart View Tabs - Mobile */}
+              <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+                <button
+                  onClick={() => setChartView("net")}
+                  className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                    chartView === "net"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600"
+                  }`}
+                >
+                  Neto
+                </button>
+                <button
+                  onClick={() => setChartView("income")}
+                  className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                    chartView === "income"
+                      ? "bg-white text-emerald-600 shadow-sm"
+                      : "text-gray-600"
+                  }`}
+                >
+                  Ing.
+                </button>
+                <button
+                  onClick={() => setChartView("expense")}
+                  className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                    chartView === "expense"
+                      ? "bg-white text-red-600 shadow-sm"
+                      : "text-gray-600"
+                  }`}
+                >
+                  Gas.
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Toca una barra para ver detalles
+            </p>
+          </div>
+
+          {/* Desktop Chart Header */}
+          <div className="hidden md:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h3 className="font-bold text-gray-900 text-lg">
                 Flujo de Caja Mensual
@@ -824,7 +984,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-[300px] w-full">
+          <div className="h-[220px] md:h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               {chartView === "net" ? (
                 <BarChart data={chartData}>
@@ -994,64 +1154,66 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: TABS (Recientes | Distribución) */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-x-hidden min-w-0">
+        <div className="bg-white rounded-xl md:rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-x-hidden min-w-0">
           {/* Tabs Header */}
           <div className="flex border-b border-gray-100 flex-shrink-0">
             <button
               onClick={() => setRightPanelTab("recent")}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-2 md:px-3 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 rightPanelTab === "recent"
                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <List size={16} />
+              <List size={14} className="md:hidden" />
+              <List size={16} className="hidden md:block" />
               Recientes
             </button>
             <button
               onClick={() => setRightPanelTab("distribution")}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold transition-all whitespace-nowrap ${
+              className={`flex-1 flex items-center justify-center gap-1.5 md:gap-2 px-2 md:px-3 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
                 rightPanelTab === "distribution"
                   ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <PieChartIcon size={16} />
+              <PieChartIcon size={14} className="md:hidden" />
+              <PieChartIcon size={16} className="hidden md:block" />
               Distribución
             </button>
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 p-5 overflow-x-hidden overflow-y-auto flex flex-col min-w-0">
+          <div className="flex-1 p-4 md:p-5 overflow-x-hidden overflow-y-auto flex flex-col min-w-0">
             {rightPanelTab === "recent" ? (
               /* RECENT TRANSACTIONS TAB */
               <>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900 text-lg">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 className="font-bold text-gray-900 text-base md:text-lg">
                     Transacciones
                   </h3>
                   <Link
                     to="/transactions"
-                    className="text-sm text-blue-600 font-semibold hover:underline"
+                    className="text-xs md:text-sm text-blue-600 font-semibold hover:underline"
                   >
                     Ver todo
                   </Link>
                 </div>
-                <div className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="space-y-2 md:space-y-3 flex-1 overflow-y-auto overflow-x-hidden">
                   {transactions.length > 0 ? (
-                    transactions.slice(0, 6).map((t: Transaction) => {
+                    transactions.slice(0, 5).map((t: Transaction) => {
                       const category = getCategoryById(t.categoryId);
                       const account = getAccountById(t.accountId);
 
                       return (
                         <div
                           key={t._id}
-                          className="flex items-start justify-between group cursor-pointer hover:bg-gray-50 p-3 rounded-xl transition-colors -mx-1"
+                          className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 md:p-3 rounded-lg md:rounded-xl transition-colors -mx-1"
                         >
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="flex items-center gap-2.5 md:gap-3 flex-1 min-w-0">
                             <div
                               className={`
-                                w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                                w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0
                                 ${
                                   t.type === "income"
                                     ? "bg-emerald-100 text-emerald-600"
@@ -1062,44 +1224,68 @@ const Dashboard: React.FC = () => {
                               `}
                             >
                               {t.type === "income" ? (
-                                <ArrowUpRight size={18} />
+                                <ArrowUpRight size={16} className="md:hidden" />
                               ) : t.type === "transfer" ? (
-                                <ArrowRightLeft size={16} />
+                                <ArrowRightLeft
+                                  size={14}
+                                  className="md:hidden"
+                                />
                               ) : (
-                                <ArrowDownRight size={18} />
+                                <ArrowDownRight
+                                  size={16}
+                                  className="md:hidden"
+                                />
+                              )}
+                              {t.type === "income" ? (
+                                <ArrowUpRight
+                                  size={18}
+                                  className="hidden md:block"
+                                />
+                              ) : t.type === "transfer" ? (
+                                <ArrowRightLeft
+                                  size={16}
+                                  className="hidden md:block"
+                                />
+                              ) : (
+                                <ArrowDownRight
+                                  size={18}
+                                  className="hidden md:block"
+                                />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-gray-900 truncate">
+                              <p className="font-semibold text-xs md:text-sm text-gray-900 truncate">
                                 {t.description || "Sin descripción"}
                               </p>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <div className="flex items-center gap-1.5 md:gap-2 mt-0.5 md:mt-1 flex-wrap">
                                 {category && (
                                   <span
-                                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+                                    className="inline-flex items-center gap-0.5 md:gap-1 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium"
                                     style={{
                                       backgroundColor: `${category.color}20`,
                                       color: category.color,
                                     }}
                                   >
-                                    <Tag size={10} />
+                                    <Tag size={8} className="md:hidden" />
+                                    <Tag
+                                      size={10}
+                                      className="hidden md:block"
+                                    />
                                     {category.name}
                                   </span>
                                 )}
-                                {account && (
-                                  <span className="text-xs text-gray-400">
-                                    {account.name}
-                                  </span>
-                                )}
+                                <span className="hidden md:inline text-xs text-gray-400">
+                                  {account?.name}
+                                </span>
                               </div>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-[10px] md:text-xs text-gray-400 mt-0.5 md:mt-1">
                                 {formatRelativeDate(t.date)}
                               </p>
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0 ml-2">
                             <span
-                              className={`font-bold text-sm ${
+                              className={`font-bold text-xs md:text-sm ${
                                 t.type === "income"
                                   ? "text-emerald-600"
                                   : t.type === "transfer"
@@ -1114,7 +1300,7 @@ const Dashboard: React.FC = () => {
                                 : ""}
                               {formatCurrency(t.amount, t.currency)}
                             </span>
-                            <span className="block text-xs text-gray-400 mt-0.5">
+                            <span className="hidden md:block text-xs text-gray-400 mt-0.5">
                               {t.currency}
                             </span>
                           </div>
@@ -1140,25 +1326,25 @@ const Dashboard: React.FC = () => {
               /* DISTRIBUTION TAB */
               <>
                 {/* Distribution Controls */}
-                <div className="space-y-3 mb-4">
+                <div className="space-y-2 md:space-y-3 mb-3 md:mb-4">
                   {/* Type Toggle: Gastos | Ingresos */}
-                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  <div className="flex items-center gap-0.5 md:gap-1 bg-gray-100 rounded-lg p-0.5 md:p-1">
                     <button
                       onClick={() => setDistributionType("expense")}
-                      className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      className={`flex-1 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all ${
                         distributionType === "expense"
                           ? "bg-white text-red-600 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
+                          : "text-gray-600"
                       }`}
                     >
                       Gastos
                     </button>
                     <button
                       onClick={() => setDistributionType("income")}
-                      className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      className={`flex-1 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all ${
                         distributionType === "income"
                           ? "bg-white text-emerald-600 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
+                          : "text-gray-600"
                       }`}
                     >
                       Ingresos
@@ -1166,38 +1352,38 @@ const Dashboard: React.FC = () => {
                   </div>
 
                   {/* GroupBy Toggle: Categoría | Cuenta */}
-                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  <div className="flex items-center gap-0.5 md:gap-1 bg-gray-100 rounded-lg p-0.5 md:p-1">
                     <button
                       onClick={() => setDistributionGroupBy("category")}
-                      className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      className={`flex-1 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all ${
                         distributionGroupBy === "category"
                           ? "bg-white text-blue-600 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
+                          : "text-gray-600"
                       }`}
                     >
-                      Por categoría
+                      Categoría
                     </button>
                     <button
                       onClick={() => setDistributionGroupBy("account")}
-                      className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      className={`flex-1 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all ${
                         distributionGroupBy === "account"
                           ? "bg-white text-blue-600 shadow-sm"
-                          : "text-gray-600 hover:text-gray-900"
+                          : "text-gray-600"
                       }`}
                     >
-                      Por cuenta
+                      Cuenta
                     </button>
                   </div>
                 </div>
 
                 {/* Donut Chart */}
                 {isDistributionLoading ? (
-                  <div className="flex-1 flex items-center justify-center py-16">
-                    <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                  <div className="flex-1 flex items-center justify-center py-10 md:py-16">
+                    <div className="w-6 h-6 md:w-8 md:h-8 border-2 md:border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                   </div>
                 ) : distributionData.length > 0 ? (
                   <div className="flex-1 flex flex-col">
-                    <div className="relative h-[200px]">
+                    <div className="relative h-[160px] md:h-[200px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -1231,8 +1417,10 @@ const Dashboard: React.FC = () => {
                       </ResponsiveContainer>
                       {/* Center Label */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-xs text-gray-500">Total</span>
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-[10px] md:text-xs text-gray-500">
+                          Total
+                        </span>
+                        <span className="text-xs md:text-sm font-bold text-gray-900">
                           {formatCompactCurrency(
                             distributionTotal,
                             selectedCurrency
@@ -1242,26 +1430,26 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Legend */}
-                    <div className="mt-4 space-y-2 overflow-y-auto overflow-x-hidden max-h-[150px]">
+                    <div className="mt-3 md:mt-4 space-y-1.5 md:space-y-2 overflow-y-auto overflow-x-hidden max-h-[120px] md:max-h-[150px]">
                       {distributionData.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between text-sm hover:bg-gray-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2"
+                          className="flex items-center justify-between text-xs md:text-sm hover:bg-gray-50 p-1.5 md:p-2 rounded-lg cursor-pointer transition-colors -mx-1 md:-mx-2"
                         >
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 md:gap-2 min-w-0 flex-1">
                             <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0"
                               style={{ backgroundColor: item.color }}
                             />
                             <span className="text-gray-700 truncate">
                               {item.name}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                            <span className="text-gray-400 text-xs">
+                          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 ml-2">
+                            <span className="text-gray-400 text-[10px] md:text-xs">
                               {item.percentage.toFixed(0)}%
                             </span>
-                            <span className="font-semibold text-gray-900">
+                            <span className="font-semibold text-gray-900 text-xs md:text-sm">
                               {formatCurrency(item.value, selectedCurrency)}
                             </span>
                           </div>
@@ -1270,17 +1458,24 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                      <PieChartIcon size={20} className="text-gray-400" />
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-6 md:py-8">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-100 rounded-full flex items-center justify-center mb-2 md:mb-3">
+                      <PieChartIcon
+                        size={16}
+                        className="md:hidden text-gray-400"
+                      />
+                      <PieChartIcon
+                        size={20}
+                        className="hidden md:block text-gray-400"
+                      />
                     </div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-xs md:text-sm font-medium text-gray-900">
                       Sin datos
                     </p>
-                    <p className="text-xs text-gray-500 mt-1 max-w-[180px]">
+                    <p className="text-[10px] md:text-xs text-gray-500 mt-1 max-w-[150px] md:max-w-[180px]">
                       No hay{" "}
                       {distributionType === "expense" ? "gastos" : "ingresos"}{" "}
-                      registrados en {activeMonth.label}.
+                      en {activeMonth.label}.
                     </p>
                   </div>
                 )}

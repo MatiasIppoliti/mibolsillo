@@ -11,6 +11,7 @@ import {
   Filter,
   X,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../hooks/useRedux";
 import {
@@ -246,166 +247,316 @@ const Transactions: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Movimientos</h1>
-          <p className="text-[var(--text-secondary)] mt-1">
-            Historial de todas tus transacciones
-          </p>
+      {/* Mobile Header & Filters */}
+      <div className="md:hidden space-y-4">
+        {/* Centered Title */}
+        <div className="flex items-center justify-center">
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">
+            Movimientos
+          </h1>
         </div>
-        <Button onClick={handleOpenModal} leftIcon={<Plus size={18} />}>
-          Nueva transacción
-        </Button>
+
+        {/* Search - Full width with subtle design */}
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          />
+          <input
+            type="text"
+            placeholder="Buscar transacciones..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/10 placeholder-[var(--text-muted)] text-sm transition-all"
+          />
+        </div>
+
+        {/* Filters Container - Centered */}
+        <div className="flex flex-col gap-3">
+          {/* Type Filters - Centered horizontally */}
+          <div className="flex justify-center gap-2 flex-wrap">
+            {(["all", "income", "expense", "transfer"] as const).map((type) => {
+              const activeStyles = {
+                all: "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-transparent shadow-md shadow-blue-500/20",
+                income:
+                  "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-transparent shadow-md shadow-emerald-500/20",
+                expense:
+                  "bg-gradient-to-r from-red-500 to-rose-600 text-white border-transparent shadow-md shadow-red-500/20",
+                transfer:
+                  "bg-gradient-to-r from-blue-400 to-cyan-500 text-white border-transparent shadow-md shadow-blue-400/20",
+              };
+              return (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                    filterType === type
+                      ? activeStyles[type]
+                      : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] active:scale-95"
+                  }`}
+                >
+                  {type === "all"
+                    ? "Todos"
+                    : type === "income"
+                    ? "Ingresos"
+                    : type === "expense"
+                    ? "Gastos"
+                    : "Transf."}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Secondary Filters - Centered horizontally */}
+          <div className="flex justify-center gap-2 flex-wrap">
+            {/* Account Select Pill */}
+            <div className="relative">
+              <select
+                value={filterAccount}
+                onChange={(e) => setFilterAccount(e.target.value)}
+                className={`
+                  appearance-none pl-3 pr-7 py-1.5 rounded-lg text-xs font-medium border transition-all outline-none cursor-pointer
+                  ${
+                    filterAccount !== "all"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-transparent shadow-md shadow-indigo-500/20"
+                      : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]"
+                  }
+                `}
+              >
+                <option value="all">Cuenta</option>
+                {accounts.map((a) => (
+                  <option key={a._id} value={a._id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={10}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
+                  filterAccount !== "all"
+                    ? "text-white"
+                    : "text-[var(--text-muted)]"
+                }`}
+              />
+            </div>
+
+            {/* Category Select Pill */}
+            <div className="relative">
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className={`
+                  appearance-none pl-3 pr-7 py-1.5 rounded-lg text-xs font-medium border transition-all outline-none cursor-pointer
+                  ${
+                    filterCategory !== "all"
+                      ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white border-transparent shadow-md shadow-purple-500/20"
+                      : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)]"
+                  }
+                `}
+              >
+                <option value="all">Categoría</option>
+                {[...incomeCategories, ...expenseCategories].map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={10}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
+                  filterCategory !== "all"
+                    ? "text-white"
+                    : "text-[var(--text-muted)]"
+                }`}
+              />
+            </div>
+
+            {/* Clear Filters Button */}
+            {(filterAccount !== "all" ||
+              filterCategory !== "all" ||
+              filterType !== "all") && (
+              <button
+                onClick={() => {
+                  setFilterAccount("all");
+                  setFilterCategory("all");
+                  setFilterType("all");
+                  setSearchTerm("");
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-medium active:scale-95 transition-transform"
+              >
+                <X size={10} />
+                Limpiar
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4">
-        {/* Search and Tabs */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-            />
-            <input
-              type="text"
-              placeholder="Buscar transacciones..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] placeholder-[var(--text-muted)]"
-            />
+      {/* Desktop Header & Filters (Wrapped to preserve existing layout exactly) */}
+      <div className="hidden md:block space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold">Movimientos</h1>
+            <p className="text-[var(--text-secondary)] mt-1">
+              Historial de todas tus transacciones
+            </p>
           </div>
-
-          <div className="flex bg-[var(--bg-card)] p-1 rounded-lg border border-[var(--border-color)] overflow-x-auto">
-            {(["all", "income", "expense", "transfer"] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                  filterType === type
-                    ? "bg-black text-white shadow-sm"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-                }`}
-              >
-                {type === "all"
-                  ? "Todos"
-                  : type === "income"
-                  ? "Ingresos"
-                  : type === "expense"
-                  ? "Gastos"
-                  : "Transferencias"}
-              </button>
-            ))}
-          </div>
+          <Button onClick={handleOpenModal} leftIcon={<Plus size={18} />}>
+            Nueva transacción
+          </Button>
         </div>
 
-        {/* Quick Filters (Styled Chips) */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] mr-2">
-            <Filter size={16} />
-            <span className="font-medium hidden sm:inline">Filtrar:</span>
+        {/* Filters */}
+        <div className="flex flex-col gap-4">
+          {/* Search and Tabs */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+              />
+              <input
+                type="text"
+                placeholder="Buscar transacciones..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] placeholder-[var(--text-muted)]"
+              />
+            </div>
+
+            <div className="flex bg-[var(--bg-card)] p-1 rounded-lg border border-[var(--border-color)] overflow-x-auto">
+              {(["all", "income", "expense", "transfer"] as const).map(
+                (type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                      filterType === type
+                        ? "bg-black text-white shadow-sm"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                    }`}
+                  >
+                    {type === "all"
+                      ? "Todos"
+                      : type === "income"
+                      ? "Ingresos"
+                      : type === "expense"
+                      ? "Gastos"
+                      : "Transferencias"}
+                  </button>
+                )
+              )}
+            </div>
           </div>
 
-          {/* Account Filter */}
-          <div className="relative group">
-            <Wallet
-              size={14}
-              className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10 ${
-                filterAccount !== "all" ? "text-white" : "text-slate-500"
-              }`}
-            />
-            <select
-              value={filterAccount}
-              onChange={(e) => setFilterAccount(e.target.value)}
-              className={`
-                appearance-none cursor-pointer pl-10 pr-9 py-2 rounded-full text-sm font-medium border transition-all duration-200 outline-none
-                ${
-                  filterAccount !== "all"
-                    ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
-                }
-              `}
-            >
-              <option value="all" className="bg-white text-slate-900">
-                Todas las cuentas
-              </option>
-              {accounts.map((a) => (
-                <option
-                  key={a._id}
-                  value={a._id}
-                  className="bg-white text-slate-900"
-                >
-                  {a.name}
+          {/* Quick Filters (Styled Chips) */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] mr-2">
+              <Filter size={16} />
+              <span className="font-medium hidden sm:inline">Filtrar:</span>
+            </div>
+
+            {/* Account Filter */}
+            <div className="relative group">
+              <Wallet
+                size={14}
+                className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10 ${
+                  filterAccount !== "all" ? "text-white" : "text-slate-500"
+                }`}
+              />
+              <select
+                value={filterAccount}
+                onChange={(e) => setFilterAccount(e.target.value)}
+                className={`
+                  appearance-none cursor-pointer pl-10 pr-9 py-2 rounded-full text-sm font-medium border transition-all duration-200 outline-none
+                  ${
+                    filterAccount !== "all"
+                      ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
+                      : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                  }
+                `}
+              >
+                <option value="all" className="bg-white text-slate-900">
+                  Todas las cuentas
                 </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
-                filterAccount !== "all" ? "text-slate-400" : "text-slate-400"
-              }`}
-            />
-          </div>
+                {accounts.map((a) => (
+                  <option
+                    key={a._id}
+                    value={a._id}
+                    className="bg-white text-slate-900"
+                  >
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
+                  filterAccount !== "all" ? "text-slate-400" : "text-slate-400"
+                }`}
+              />
+            </div>
 
-          {/* Category Filter */}
-          <div className="relative group">
-            <Tag
-              size={14}
-              className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10 ${
-                filterCategory !== "all" ? "text-white" : "text-slate-500"
-              }`}
-            />
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className={`
-                appearance-none cursor-pointer pl-10 pr-9 py-2 rounded-full text-sm font-medium border transition-all duration-200 outline-none
-                ${
-                  filterCategory !== "all"
-                    ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
-                }
-              `}
-            >
-              <option value="all" className="bg-white text-slate-900">
-                Todas las categorías
-              </option>
-              {[...incomeCategories, ...expenseCategories].map((c) => (
-                <option
-                  key={c._id}
-                  value={c._id}
-                  className="bg-white text-slate-900"
-                >
-                  {c.name}
+            {/* Category Filter */}
+            <div className="relative group">
+              <Tag
+                size={14}
+                className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10 ${
+                  filterCategory !== "all" ? "text-white" : "text-slate-500"
+                }`}
+              />
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className={`
+                  appearance-none cursor-pointer pl-10 pr-9 py-2 rounded-full text-sm font-medium border transition-all duration-200 outline-none
+                  ${
+                    filterCategory !== "all"
+                      ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
+                      : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                  }
+                `}
+              >
+                <option value="all" className="bg-white text-slate-900">
+                  Todas las categorías
                 </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
-                filterCategory !== "all" ? "text-slate-400" : "text-slate-400"
-              }`}
-            />
-          </div>
+                {[...incomeCategories, ...expenseCategories].map((c) => (
+                  <option
+                    key={c._id}
+                    value={c._id}
+                    className="bg-white text-slate-900"
+                  >
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
+                  filterCategory !== "all" ? "text-slate-400" : "text-slate-400"
+                }`}
+              />
+            </div>
 
-          {/* Clear Filters Button */}
-          {(filterAccount !== "all" ||
-            filterCategory !== "all" ||
-            filterType !== "all") && (
-            <button
-              onClick={() => {
-                setFilterAccount("all");
-                setFilterCategory("all");
-                setFilterType("all");
-                setSearchTerm("");
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-            >
-              <X size={14} />
-              <span className="hidden sm:inline">Limpiar</span>
-            </button>
-          )}
+            {/* Clear Filters Button */}
+            {(filterAccount !== "all" ||
+              filterCategory !== "all" ||
+              filterType !== "all") && (
+              <button
+                onClick={() => {
+                  setFilterAccount("all");
+                  setFilterCategory("all");
+                  setFilterType("all");
+                  setSearchTerm("");
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+              >
+                <X size={14} />
+                <span className="hidden sm:inline">Limpiar</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -417,7 +568,18 @@ const Transactions: React.FC = () => {
             .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
             .map(([date, dayTransactions]) => (
               <div key={date} className="animate-fade-in">
-                <div className="flex items-center justify-between mb-2 px-2">
+                {/* Mobile: Stacked layout for date and total */}
+                <div className="md:hidden flex flex-col items-center mb-2 px-2 gap-0.5">
+                  <span className="text-sm font-semibold text-[var(--text-secondary)] capitalize">
+                    {formatRelativeDate(date)}
+                  </span>
+                  <span className="text-xs font-medium text-[var(--text-muted)] max-w-full truncate text-center">
+                    {getDailyTotal(dayTransactions)}
+                  </span>
+                </div>
+
+                {/* Desktop: Original horizontal layout */}
+                <div className="hidden md:flex items-center justify-between mb-2 px-2">
                   <span className="text-sm font-semibold text-[var(--text-secondary)] capitalize">
                     {formatRelativeDate(date)}
                   </span>
@@ -439,94 +601,179 @@ const Transactions: React.FC = () => {
                           : null;
 
                       return (
-                        <div
-                          key={t._id}
-                          className="flex items-center justify-between p-4 hover:bg-[var(--bg-card-hover)] transition-all group"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                              style={{
-                                backgroundColor: `${
-                                  category?.color || getTransactionColor(t.type)
-                                }15`,
-                                color:
-                                  category?.color ||
-                                  getTransactionColor(t.type),
-                              }}
-                            >
-                              {/* If category exists and has icon we could use it here, for now keeping generic or type icon */}
-                              {getTransactionIcon(t.type)}
+                        <div key={t._id}>
+                          {/* Mobile View */}
+                          <div className="flex items-center justify-between p-3 gap-3 md:hidden hover:bg-[var(--bg-card-hover)] transition-colors border-b border-[var(--border-color)] last:border-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              {/* Icon */}
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                                style={{
+                                  backgroundColor: `${
+                                    category?.color ||
+                                    getTransactionColor(t.type)
+                                  }15`,
+                                  color:
+                                    category?.color ||
+                                    getTransactionColor(t.type),
+                                }}
+                              >
+                                {getTransactionIcon(t.type)}
+                              </div>
+
+                              {/* Content */}
+                              <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="font-semibold text-sm text-[var(--text-primary)] truncate">
+                                    {t.description || "Sin descripción"}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] min-w-0">
+                                  {category && (
+                                    <span
+                                      className="px-1.5 py-0.5 rounded-[4px] font-medium shrink-0 text-[10px]"
+                                      style={{
+                                        backgroundColor: category.color + "20",
+                                        color: category.color,
+                                      }}
+                                    >
+                                      {category.name}
+                                    </span>
+                                  )}
+                                  {t.type === "transfer" && (
+                                    <span className="px-1.5 py-0.5 rounded-[4px] font-medium shrink-0 text-[10px] bg-blue-50 text-blue-600">
+                                      Transf.
+                                    </span>
+                                  )}
+                                  <span className="truncate flex items-center gap-1">
+                                    {account?.name}
+                                    {t.type === "transfer" && toAccount && (
+                                      <>
+                                        <ArrowRightLeft size={8} />
+                                        {toAccount.name}
+                                      </>
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
 
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <p className="font-semibold text-[var(--text-primary)] truncate">
-                                  {t.description || "Sin descripción"}
-                                </p>
-                                {category && (
-                                  <Badge
-                                    variant="default" // Using default as secondary is not in type
-                                    className="text-[10px] px-1.5 py-0 h-5 font-normal bg-opacity-50"
-                                    style={{
-                                      backgroundColor: category.color + "20",
-                                      color: category.color,
-                                    }}
-                                  >
-                                    {category.name}
-                                  </Badge>
-                                )}
-                                {t.type === "transfer" && (
-                                  <Badge
-                                    variant="info"
-                                    className="text-[10px] px-1.5 py-0 h-5 font-normal"
-                                  >
-                                    Transferencia
-                                  </Badge>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                                <span>{account?.name}</span>
-                                {t.type === "transfer" && toAccount && (
-                                  <>
-                                    <ArrowRightLeft size={10} />
-                                    <span>{toAccount.name}</span>
-                                  </>
-                                )}
-                              </div>
+                            {/* Right Side */}
+                            <div className="flex flex-col items-end gap-1.5 shrink-0 pl-2">
+                              <span
+                                className="text-sm font-bold whitespace-nowrap"
+                                style={{
+                                  color:
+                                    t.type === "income"
+                                      ? "var(--accent-success)"
+                                      : t.type === "expense"
+                                      ? "var(--accent-danger)"
+                                      : "var(--text-primary)",
+                                }}
+                              >
+                                {t.type === "income"
+                                  ? "+"
+                                  : t.type === "expense"
+                                  ? "-"
+                                  : ""}
+                                {formatCurrency(t.amount, t.currency)}
+                              </span>
+                              <button
+                                onClick={() => handleDelete(t._id)}
+                                className="text-gray-300 hover:text-red-500 p-1 -mr-2 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-1">
-                            <span
-                              className="text-base font-bold flex items-center gap-1"
-                              style={{
-                                color:
-                                  t.type === "income"
-                                    ? "var(--accent-success)"
-                                    : t.type === "expense"
-                                    ? "var(--accent-danger)"
-                                    : "var(--text-primary)",
-                              }}
-                            >
-                              {t.type === "income"
-                                ? "+"
-                                : t.type === "expense"
-                                ? "-"
-                                : ""}
-                              {formatCurrency(t.amount, t.currency)}
-                              <span className="text-[10px] text-[var(--text-muted)] ml-0.5 font-normal">
-                                {t.currency}
-                              </span>
-                            </span>
+                          {/* Desktop View */}
+                          <div className="hidden md:flex items-center justify-between p-4 hover:bg-[var(--bg-card-hover)] transition-all group">
+                            <div className="flex items-center gap-4">
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                                style={{
+                                  backgroundColor: `${
+                                    category?.color ||
+                                    getTransactionColor(t.type)
+                                  }15`,
+                                  color:
+                                    category?.color ||
+                                    getTransactionColor(t.type),
+                                }}
+                              >
+                                {getTransactionIcon(t.type)}
+                              </div>
 
-                            <button
-                              onClick={() => handleDelete(t._id)}
-                              className="p-1 px-2 rounded hover:bg-red-50 text-red-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              Eliminar
-                            </button>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <p className="font-semibold text-[var(--text-primary)] truncate">
+                                    {t.description || "Sin descripción"}
+                                  </p>
+                                  {category && (
+                                    <Badge
+                                      variant="default" // Using default as secondary is not in type
+                                      className="text-[10px] px-1.5 py-0 h-5 font-normal bg-opacity-50"
+                                      style={{
+                                        backgroundColor: category.color + "20",
+                                        color: category.color,
+                                      }}
+                                    >
+                                      {category.name}
+                                    </Badge>
+                                  )}
+                                  {t.type === "transfer" && (
+                                    <Badge
+                                      variant="info"
+                                      className="text-[10px] px-1.5 py-0 h-5 font-normal"
+                                    >
+                                      Transferencia
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                                  <span>{account?.name}</span>
+                                  {t.type === "transfer" && toAccount && (
+                                    <>
+                                      <ArrowRightLeft size={10} />
+                                      <span>{toAccount.name}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-1">
+                              <span
+                                className="text-base font-bold flex items-center gap-1"
+                                style={{
+                                  color:
+                                    t.type === "income"
+                                      ? "var(--accent-success)"
+                                      : t.type === "expense"
+                                      ? "var(--accent-danger)"
+                                      : "var(--text-primary)",
+                                }}
+                              >
+                                {t.type === "income"
+                                  ? "+"
+                                  : t.type === "expense"
+                                  ? "-"
+                                  : ""}
+                                {formatCurrency(t.amount, t.currency)}
+                                <span className="text-[10px] text-[var(--text-muted)] ml-0.5 font-normal">
+                                  {t.currency}
+                                </span>
+                              </span>
+
+                              <button
+                                onClick={() => handleDelete(t._id)}
+                                className="p-1 px-2 rounded hover:bg-red-50 text-red-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -551,206 +798,487 @@ const Transactions: React.FC = () => {
         </Card>
       )}
 
-      {/* Create Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Nueva transacción"
         size="lg"
       >
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Transaction Type Tabs */}
-          <div className="flex p-1 bg-[var(--bg-elevated)] rounded-xl relative">
-            {(["expense", "income", "transfer"] as const).map((type) => {
-              const isActive = formData.type === type;
-              const params = getParamsForType(type);
+        <form onSubmit={handleSubmit}>
+          {/* Mobile Layout */}
+          <div className="md:hidden space-y-5">
+            {/* Transaction Type Tabs - Mobile */}
+            <div className="flex gap-2 p-1 bg-slate-100/80 rounded-2xl">
+              {(["expense", "income", "transfer"] as const).map((type) => {
+                const isActive = formData.type === type;
+                const config = {
+                  expense: {
+                    label: "Gasto",
+                    icon: <TrendingDown size={16} />,
+                    activeClass:
+                      "bg-red-500 text-white shadow-lg shadow-red-500/25",
+                  },
+                  income: {
+                    label: "Ingreso",
+                    icon: <TrendingUp size={16} />,
+                    activeClass:
+                      "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25",
+                  },
+                  transfer: {
+                    label: "Transf.",
+                    icon: <ArrowRightLeft size={16} />,
+                    activeClass:
+                      "bg-blue-500 text-white shadow-lg shadow-blue-500/25",
+                  },
+                };
 
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      type: type,
-                      categoryId: "",
-                    })
-                  }
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 z-10 ${
-                    isActive
-                      ? "shadow-sm " + params.activeClass
-                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-                  }`}
-                >
-                  {params.label}
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        type: type,
+                        categoryId: "",
+                      })
+                    }
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? config[type].activeClass
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {config[type].icon}
+                    {config[type].label}
+                  </button>
+                );
+              })}
+            </div>
 
-          <div className="grid grid-cols-1 gap-5">
-            <Select
-              label={formData.type === "transfer" ? "Cuenta origen" : "Cuenta"}
-              value={formData.accountId}
-              onChange={(e) =>
-                setFormData({ ...formData, accountId: e.target.value })
-              }
-              options={accounts
-                .filter(
-                  (a) =>
-                    formData.type !== "transfer" || a.type !== "credit_card"
-                )
-                .map((a) => ({
-                  value: a._id,
-                  label:
-                    a.type === "credit_card"
-                      ? `${a.issuer || "Tarjeta"} •••• ${a.last4Digits || ""}`
-                      : `${a.name} (${formatCurrency(a.balance, a.currency)})`,
-                }))}
-              placeholder="Seleccionar cuenta"
-            />
-
-            {formData.type === "transfer" && (
-              <Select
-                label="Cuenta destino"
-                value={formData.toAccountId}
-                onChange={(e) =>
-                  setFormData({ ...formData, toAccountId: e.target.value })
-                }
-                options={accounts
-                  .filter((a) => {
-                    const sourceAccount = accounts.find(
-                      (acc) => acc._id === formData.accountId
-                    );
-                    // Filter out same account, credit cards, and different currencies
-                    return (
-                      a._id !== formData.accountId &&
-                      a.type !== "credit_card" &&
-                      (!sourceAccount || a.currency === sourceAccount.currency)
-                    );
-                  })
-                  .map((a) => ({
-                    value: a._id,
-                    label: `${a.name} (${formatCurrency(
-                      a.balance,
-                      a.currency
-                    )})`,
-                  }))}
-                placeholder="Seleccionar cuenta destino"
-              />
-            )}
-
-            {formData.type !== "transfer" && (
-              <Select
-                label="Categoría"
-                value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
-                options={currentCategories.map((category) => ({
-                  value: category._id,
-                  label: category.name,
-                }))}
-                placeholder="Seleccionar categoría"
-              />
-            )}
-
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Input
-                  label="Monto"
+            {/* Amount Field - Mobile (Prominent) */}
+            <div className="relative">
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                Monto
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg font-medium">
+                  {formData.type === "expense"
+                    ? "-"
+                    : formData.type === "income"
+                    ? "+"
+                    : ""}
+                </span>
+                <input
                   type="text"
                   value={formData.amount}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Remove dots to get raw number string (es-AR uses dots for thousands)
                     const cleanValue = value.replace(/\./g, "");
-
-                    // Allow digits and max one comma
                     if (!/^\d*(,\d*)?$/.test(cleanValue)) return;
-
                     const [integerPart, decimalPart] = cleanValue.split(",");
-
-                    // Format integer part
                     const formattedInteger =
                       integerPart === ""
                         ? ""
                         : new Intl.NumberFormat("es-AR").format(
                             parseInt(integerPart, 10)
                           );
-
                     let finalValue = formattedInteger;
-                    // If there was a comma, append it (and any decimals)
                     if (decimalPart !== undefined) {
                       finalValue += "," + decimalPart;
                     }
-
                     setFormData({ ...formData, amount: finalValue });
                   }}
                   placeholder="0"
                   required
-                  rightIcon={
-                    <span className="text-xs font-bold text-slate-500">
-                      {accounts.find((a) => a._id === formData.accountId)
-                        ?.currency || "ARS"}
-                    </span>
-                  }
+                  className={`w-full pl-8 pr-16 py-4 text-2xl font-bold text-center rounded-xl border-2 transition-all focus:outline-none ${
+                    formData.type === "expense"
+                      ? "border-red-200 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+                      : formData.type === "income"
+                      ? "border-emerald-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+                      : "border-blue-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                  } bg-white text-slate-900 placeholder:text-slate-300`}
+                  inputMode="decimal"
                 />
-              </div>
-
-              <div className="w-1/3">
-                <Input
-                  label="Fecha"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  required
-                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                  {accounts.find((a) => a._id === formData.accountId)
+                    ?.currency || "ARS"}
+                </span>
               </div>
             </div>
 
-            <Input
-              label="Descripción"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder={
-                formData.type === "transfer"
-                  ? "Ej: Pago de tarjeta"
-                  : "Ej: Compra en supermercado"
-              }
-            />
+            {/* Account Field - Mobile */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                {formData.type === "transfer" ? "Cuenta origen" : "Cuenta"}
+              </label>
+              <select
+                value={formData.accountId}
+                onChange={(e) =>
+                  setFormData({ ...formData, accountId: e.target.value })
+                }
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all appearance-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 14px center",
+                }}
+              >
+                <option value="">Seleccionar cuenta</option>
+                {accounts
+                  .filter(
+                    (a) =>
+                      formData.type !== "transfer" || a.type !== "credit_card"
+                  )
+                  .map((a) => (
+                    <option key={a._id} value={a._id}>
+                      {a.type === "credit_card"
+                        ? `${a.issuer || "Tarjeta"} •••• ${a.last4Digits || ""}`
+                        : `${a.name} (${formatCurrency(
+                            a.balance,
+                            a.currency
+                          )})`}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Destination Account - Mobile (Transfer only) */}
+            {formData.type === "transfer" && (
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                  Cuenta destino
+                </label>
+                <select
+                  value={formData.toAccountId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, toAccountId: e.target.value })
+                  }
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
+                  }}
+                >
+                  <option value="">Seleccionar cuenta destino</option>
+                  {accounts
+                    .filter((a) => {
+                      const sourceAccount = accounts.find(
+                        (acc) => acc._id === formData.accountId
+                      );
+                      return (
+                        a._id !== formData.accountId &&
+                        a.type !== "credit_card" &&
+                        (!sourceAccount ||
+                          a.currency === sourceAccount.currency)
+                      );
+                    })
+                    .map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {a.name} ({formatCurrency(a.balance, a.currency)})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+
+            {/* Category Field - Mobile (Non-transfer only) */}
+            {formData.type !== "transfer" && (
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                  Categoría
+                </label>
+                <select
+                  value={formData.categoryId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categoryId: e.target.value })
+                  }
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
+                  }}
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {currentCategories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Date Field - Mobile */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                Fecha
+              </label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+                required
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
+              />
+            </div>
+
+            {/* Description Field - Mobile */}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                Descripción
+              </label>
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder={
+                  formData.type === "transfer"
+                    ? "Ej: Pago de tarjeta"
+                    : "Ej: Compra en supermercado"
+                }
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
+              />
+            </div>
+
+            {/* Action Buttons - Mobile */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 py-3.5 px-4 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={
+                  !formData.amount ||
+                  !formData.date ||
+                  (!formData.categoryId && formData.type !== "transfer") ||
+                  !formData.accountId ||
+                  (formData.type === "transfer" &&
+                    (!formData.toAccountId || !formData.description))
+                }
+                className={`flex-1 py-3.5 px-4 rounded-xl font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
+                  formData.type === "expense"
+                    ? "bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/25"
+                    : formData.type === "income"
+                    ? "bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/25"
+                    : "bg-blue-500 hover:bg-blue-600 shadow-lg shadow-blue-500/25"
+                }`}
+              >
+                Crear
+              </button>
+            </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setIsModalOpen(false)}
-              fullWidth
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              fullWidth
-              disabled={
-                !formData.amount ||
-                !formData.date ||
-                (!formData.categoryId && formData.type !== "transfer") ||
-                !formData.accountId ||
-                (formData.type === "transfer" &&
-                  (!formData.toAccountId || !formData.description))
-              }
-            >
-              Crear transacción
-            </Button>
+          {/* Desktop Layout - Original */}
+          <div className="hidden md:block space-y-5">
+            {/* Transaction Type Tabs */}
+            <div className="flex p-1 bg-[var(--bg-elevated)] rounded-xl relative">
+              {(["expense", "income", "transfer"] as const).map((type) => {
+                const isActive = formData.type === type;
+                const params = getParamsForType(type);
+
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        type: type,
+                        categoryId: "",
+                      })
+                    }
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 z-10 ${
+                      isActive
+                        ? "shadow-sm " + params.activeClass
+                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+                    }`}
+                  >
+                    {params.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid grid-cols-1 gap-5">
+              <Select
+                label={
+                  formData.type === "transfer" ? "Cuenta origen" : "Cuenta"
+                }
+                value={formData.accountId}
+                onChange={(e) =>
+                  setFormData({ ...formData, accountId: e.target.value })
+                }
+                options={accounts
+                  .filter(
+                    (a) =>
+                      formData.type !== "transfer" || a.type !== "credit_card"
+                  )
+                  .map((a) => ({
+                    value: a._id,
+                    label:
+                      a.type === "credit_card"
+                        ? `${a.issuer || "Tarjeta"} •••• ${a.last4Digits || ""}`
+                        : `${a.name} (${formatCurrency(
+                            a.balance,
+                            a.currency
+                          )})`,
+                  }))}
+                placeholder="Seleccionar cuenta"
+              />
+
+              {formData.type === "transfer" && (
+                <Select
+                  label="Cuenta destino"
+                  value={formData.toAccountId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, toAccountId: e.target.value })
+                  }
+                  options={accounts
+                    .filter((a) => {
+                      const sourceAccount = accounts.find(
+                        (acc) => acc._id === formData.accountId
+                      );
+                      return (
+                        a._id !== formData.accountId &&
+                        a.type !== "credit_card" &&
+                        (!sourceAccount ||
+                          a.currency === sourceAccount.currency)
+                      );
+                    })
+                    .map((a) => ({
+                      value: a._id,
+                      label: `${a.name} (${formatCurrency(
+                        a.balance,
+                        a.currency
+                      )})`,
+                    }))}
+                  placeholder="Seleccionar cuenta destino"
+                />
+              )}
+
+              {formData.type !== "transfer" && (
+                <Select
+                  label="Categoría"
+                  value={formData.categoryId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, categoryId: e.target.value })
+                  }
+                  options={currentCategories.map((category) => ({
+                    value: category._id,
+                    label: category.name,
+                  }))}
+                  placeholder="Seleccionar categoría"
+                />
+              )}
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Input
+                    label="Monto"
+                    type="text"
+                    value={formData.amount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const cleanValue = value.replace(/\./g, "");
+                      if (!/^\d*(,\d*)?$/.test(cleanValue)) return;
+                      const [integerPart, decimalPart] = cleanValue.split(",");
+                      const formattedInteger =
+                        integerPart === ""
+                          ? ""
+                          : new Intl.NumberFormat("es-AR").format(
+                              parseInt(integerPart, 10)
+                            );
+                      let finalValue = formattedInteger;
+                      if (decimalPart !== undefined) {
+                        finalValue += "," + decimalPart;
+                      }
+                      setFormData({ ...formData, amount: finalValue });
+                    }}
+                    placeholder="0"
+                    required
+                    rightIcon={
+                      <span className="text-xs font-bold text-slate-500">
+                        {accounts.find((a) => a._id === formData.accountId)
+                          ?.currency || "ARS"}
+                      </span>
+                    }
+                  />
+                </div>
+
+                <div className="w-1/3">
+                  <Input
+                    label="Fecha"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+
+              <Input
+                label="Descripción"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder={
+                  formData.type === "transfer"
+                    ? "Ej: Pago de tarjeta"
+                    : "Ej: Compra en supermercado"
+                }
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsModalOpen(false)}
+                fullWidth
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                fullWidth
+                disabled={
+                  !formData.amount ||
+                  !formData.date ||
+                  (!formData.categoryId && formData.type !== "transfer") ||
+                  !formData.accountId ||
+                  (formData.type === "transfer" &&
+                    (!formData.toAccountId || !formData.description))
+                }
+              >
+                Crear transacción
+              </Button>
+            </div>
           </div>
         </form>
       </Modal>
+
+      {/* FAB for Mobile */}
+      <button
+        onClick={handleOpenModal}
+        className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl shadow-blue-500/30 flex items-center justify-center z-50 hover:from-blue-600 hover:to-indigo-700 active:scale-95 transition-all"
+        aria-label="Nueva transacción"
+      >
+        <Plus size={24} />
+      </button>
     </div>
   );
 };

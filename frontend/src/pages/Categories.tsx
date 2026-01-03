@@ -141,9 +141,65 @@ const Categories: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-5 md:space-y-6 animate-fade-in">
+      {/* Mobile Header & Tabs */}
+      <div className="md:hidden space-y-4">
+        {/* Centered Title */}
+        <div className="flex items-center justify-center">
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">
+            Categorías
+          </h1>
+        </div>
+
+        {/* Centered Tabs - Mobile */}
+        <div className="flex justify-center">
+          <div className="flex gap-1.5 p-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
+            <button
+              onClick={() => setActiveTab("expense")}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-semibold text-xs transition-all ${
+                activeTab === "expense"
+                  ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md shadow-red-500/25"
+                  : "text-[var(--text-secondary)] active:scale-95"
+              }`}
+            >
+              <TrendingDown size={14} />
+              Gastos
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                  activeTab === "expense"
+                    ? "bg-white/20 text-white"
+                    : "bg-[var(--bg-elevated)] text-[var(--text-muted)]"
+                }`}
+              >
+                {expenseCategories.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("income")}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-semibold text-xs transition-all ${
+                activeTab === "income"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25"
+                  : "text-[var(--text-secondary)] active:scale-95"
+              }`}
+            >
+              <TrendingUp size={14} />
+              Ingresos
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                  activeTab === "income"
+                    ? "bg-white/20 text-white"
+                    : "bg-[var(--bg-elevated)] text-[var(--text-muted)]"
+                }`}
+              >
+                {incomeCategories.length}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold">Categorías</h1>
           <p className="text-[var(--text-secondary)] mt-1">
@@ -155,8 +211,8 @@ const Categories: React.FC = () => {
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 p-1 bg-[var(--bg-card)] rounded-xl w-fit">
+      {/* Desktop Tabs */}
+      <div className="hidden md:flex gap-2 p-1 bg-[var(--bg-card)] rounded-xl w-fit">
         <button
           onClick={() => setActiveTab("expense")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
@@ -187,53 +243,104 @@ const Categories: React.FC = () => {
         </button>
       </div>
 
-      {/* Categories Grid */}
+      {/* Categories Grid/List */}
       {currentCategories.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {currentCategories.map((category) => (
-            <Card
-              key={category._id}
-              className="flex items-center justify-between group hover:border-[var(--accent-primary)] transition-colors"
-            >
-              <div className="flex items-center gap-3">
+        <>
+          {/* Mobile List View */}
+          <Card padding="none" className="md:hidden overflow-hidden">
+            <div className="divide-y divide-[var(--border-color)]">
+              {currentCategories.map((category) => (
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
-                  style={{ backgroundColor: category.color }}
+                  key={category._id}
+                  className="flex items-center justify-between p-3.5 hover:bg-[var(--bg-card-hover)] active:bg-[var(--bg-elevated)] transition-colors"
                 >
-                  {activeTab === "income" ? (
-                    <TrendingUp size={18} />
-                  ) : (
-                    <TrendingDown size={18} />
-                  )}
-                </div>
-                <span className="font-medium">{category.name}</span>
-              </div>
+                  {/* Left: Icon + Name */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0"
+                      style={{ backgroundColor: category.color }}
+                    >
+                      {activeTab === "income" ? (
+                        <TrendingUp size={16} />
+                      ) : (
+                        <TrendingDown size={16} />
+                      )}
+                    </div>
+                    <span className="font-medium text-sm text-[var(--text-primary)] truncate">
+                      {category.name}
+                    </span>
+                  </div>
 
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => handleOpenModal(category)}
-                  className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  onClick={() => handleDelete(category._id)}
-                  className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--accent-danger)]"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  {/* Right: Actions */}
+                  <div className="flex items-center gap-0.5 shrink-0 pl-2">
+                    <button
+                      onClick={() => handleOpenModal(category)}
+                      className="p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] active:scale-95 transition-all"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category._id)}
+                      className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--accent-danger)] hover:bg-red-50 active:scale-95 transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Desktop Grid View */}
+          <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {currentCategories.map((category) => (
+              <Card
+                key={category._id}
+                className="flex items-center justify-between group hover:border-[var(--accent-primary)] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
+                    style={{ backgroundColor: category.color }}
+                  >
+                    {activeTab === "income" ? (
+                      <TrendingUp size={18} />
+                    ) : (
+                      <TrendingDown size={18} />
+                    )}
+                  </div>
+                  <span className="font-medium">{category.name}</span>
+                </div>
+
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleOpenModal(category)}
+                    className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(category._id)}
+                    className="p-2 rounded-lg hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--accent-danger)]"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
       ) : (
-        <Card className="text-center py-12">
-          <Tags size={48} className="mx-auto text-[var(--text-muted)] mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
+        <Card className="text-center py-10 md:py-12">
+          <Tags
+            size={40}
+            className="mx-auto text-[var(--text-muted)] mb-3 md:mb-4 md:w-12 md:h-12"
+          />
+          <h3 className="text-base md:text-lg font-semibold mb-2">
             No hay categorías de{" "}
             {activeTab === "income" ? "ingresos" : "gastos"}
           </h3>
-          <p className="text-[var(--text-secondary)] mb-4">
+          <p className="text-sm md:text-base text-[var(--text-secondary)] mb-4 px-4">
             Crea categorías para organizar mejor tus finanzas
           </p>
           <Button
@@ -314,6 +421,15 @@ const Categories: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* FAB for Mobile */}
+      <button
+        onClick={() => handleOpenModal()}
+        className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-xl shadow-purple-500/30 flex items-center justify-center z-50 hover:from-purple-600 hover:to-pink-700 active:scale-95 transition-all"
+        aria-label="Nueva categoría"
+      >
+        <Plus size={24} />
+      </button>
     </div>
   );
 };
